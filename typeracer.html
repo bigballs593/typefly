@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amalita la piloto que escribe rápido</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            font-size: 32px;
+            color: #00c7fc;
+            margin-bottom: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .text-display {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #e0e0e0;
+            background: #ffffff;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            line-height: 1.6;
+            text-align: left;
+        }
+        .text-display span.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+        .text-display span.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .typing-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            margin-top: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .typing-input:focus {
+            border-color: #00c7fc;
+            box-shadow: 0 0 0 3px rgba(0, 199, 252, 0.1);
+            outline: none;
+        }
+        #stats {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .airplane-container {
+            width: 100%;
+            height: 80px;
+            position: relative;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .airplane {
+            width: 100px;
+            height: 50px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            transition: left 0.5s ease-in-out;
+        }
+        #refresh-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #00c7fc;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        #refresh-btn:hover {
+            background: #0099cc;
+            transform: scale(1.05);
+        }
+        #refresh-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Amalita la piloto que escribe rápido</h1>
+        <div id="timer">Tiempo: 0s</div>
+        <div class="text-display" id="text-display"></div>
+        <input type="text" class="typing-input" id="typing-input" autofocus>
+        <div id="stats">
+            <div>Velocidad: <span id="speed">0</span> PPM</div>
+            <div>Precisión: <span id="accuracy">100</span>%</div>
+        </div>
+        <div class="airplane-container">
+            <svg class="airplane" fill="#000000" width="235px" height="235px" viewBox="0 0 24.00 24.00" id="airplane" data-name="Flat Line" xmlns="http://www.w3.org/2000/svg" stroke="#000000">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                    <path id="secondary" d="M10,20h2.11a1,1,0,0,0,.81-.42L16.84,14H19a2,2,0,0,0,2-2h0a2,2,0,0,0-2-2H16.84L12.92,4.42A1,1,0,0,0,12.11,4H10l1,6H8L6.29,8.29A1,1,0,0,0,5.59,8H3l2,4L3,16H5.59a1,1,0,0,0,.7-.29L8,14h3Z" style="fill: #00c7fc; stroke-width:1.224;"></path>
+                    <path id="primary" d="M10,20h2.11a1,1,0,0,0,.81-.42L16.84,14H19a2,2,0,0,0,2-2h0a2,2,0,0,0-2-2H16.84L12.92,4.42A1,1,0,0,0,12.11,4H10l1,6H8L6.29,8.29A1,1,0,0,0,5.59,8H3l2,4L3,16H5.59a1,1,0,0,0,.7-.29L8,14h3Z" style="fill: none; stroke: #00364a; stroke-linecap: round; stroke-linejoin: round; stroke-width:1.224;"></path>
+                </g>
+            </svg>
+        </div>
+        <button id="refresh-btn">Refresh</button>
+    </div>
+
+    <script>
+        let timerInterval;
+        let startTime;
+        let correctLetters = 0;
+        let totalLetters = 0;
+        let airplaneProgress = 0;
+
+        const paragraphs = [
+            "El sol brilla en el cielo azul. Los pájaros cantan en los árboles. Es un día perfecto para pasear por el parque.",
+            "La tecnología ha transformado nuestra forma de vivir. Hoy en día, es difícil imaginar la vida sin internet o smartphones.",
+            "Aprender un nuevo idioma es una aventura fascinante. Cada palabra nueva es un paso hacia una cultura diferente.",
+            "La lectura es una puerta a mundos desconocidos. A través de los libros, podemos viajar sin movernos de casa.",
+            "La naturaleza nos ofrece paisajes increíbles. Desde montañas majestuosas hasta playas tranquilas, siempre hay algo que admirar.",
+            "La música es el lenguaje universal. No importa el idioma que hables, una buena canción siempre te emocionará.",
+            "El deporte es esencial para mantener un estilo de vida saludable. Además, fomenta el trabajo en equipo y la disciplina.",
+            "La gastronomía es una de las mejores formas de conocer una cultura. Cada platillo tiene una historia que contar.",
+            "Viajar es una de las experiencias más enriquecedoras. Conocer nuevos lugares te abre la mente y el corazón.",
+            "El arte es una expresión del alma. A través de él, podemos comunicar emociones que las palabras no pueden describir."
+        ];
+
+        function getRandomParagraph() {
+            return paragraphs[Math.floor(Math.random() * paragraphs.length)];
+        }
+
+        function highlightText(typedText, targetText) {
+            const textDisplay = document.getElementById('text-display');
+            let highlightedText = "";
+            for (let i = 0; i < targetText.length; i++) {
+                if (i < typedText.length) {
+                    if (typedText[i] === targetText[i]) {
+                        highlightedText += `<span class="correct">${targetText[i]}</span>`;
+                    } else {
+                        highlightedText += `<span class="incorrect">${targetText[i]}</span>`;
+                    }
+                } else {
+                    highlightedText += targetText[i];
+                }
+            }
+            textDisplay.innerHTML = highlightedText;
+        }
+
+        let currentText = getRandomParagraph();
+        totalLetters = currentText.length;
+
+        document.getElementById('text-display').textContent = currentText;
+
+        const typingInput = document.getElementById('typing-input');
+        typingInput.addEventListener('input', () => {
+            correctLetters = 0;
+            const typedText = typingInput.value;
+            if (!startTime) {
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+            for (let i = 0; i < typedText.length; i++) {
+                if (typedText[i] === currentText[i]) {
+                    correctLetters++;
+                }
+            }
+            airplaneProgress = (correctLetters / totalLetters) * 100;
+            
+            const timeElapsed = (Date.now() - startTime) / 1000;
+            const speed = Math.floor((correctLetters / 5) / (timeElapsed / 60));
+            const accuracy = Math.floor((correctLetters / typedText.length) * 100);
+            
+            document.getElementById('speed').textContent = speed;
+            document.getElementById('accuracy').textContent = accuracy;
+            
+            const airplane = document.querySelector('.airplane');
+            airplane.style.left = `${airplaneProgress}%`;
+            
+            highlightText(typedText, currentText);
+            
+            if (typedText === currentText) {
+                clearInterval(timerInterval);
+                typingInput.disabled = true;
+                setTimeout(() => {
+                    refreshBtn.click();
+                }, 1000);
+            }
+        });
+
+        function updateTimer() {
+            const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timer').textContent = `Tiempo: ${timeElapsed}s`;
+        }
+
+        const refreshBtn = document.getElementById('refresh-btn');
+        refreshBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            startTime = null;
+            correctLetters = 0;
+            currentText = getRandomParagraph();
+            totalLetters = currentText.length;
+            document.getElementById('text-display').textContent = currentText;
+            document.getElementById('typing-input').value = '';
+            document.getElementById('speed').textContent = '0';
+            document.getElementById('accuracy').textContent = '100';
+            document.getElementById('timer').textContent = 'Tiempo: 0s';
+            
+            const airplane = document.querySelector('.airplane');
+            airplane.style.left = '0';
+            typingInput.disabled = false;
+            typingInput.focus();
+        });
+    </script>
+</body>
+</html>
